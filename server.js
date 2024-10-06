@@ -1,74 +1,95 @@
 const express = require('express');
-const cors = require('cors');
-const { MongoClient, ObjectId } = require('mongodb');
-require('dotenv').config();
+const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
-const app = express();
-const PORT = 5000;
+const path = require('path');  
+require('dotenv').config();
 
-app.use(cors());
+const app = express();
 app.use(bodyParser.json());
 
 const uri = process.env.MONGODB_URI;
-let db;
+let db, messagesCollection;
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(client => {
     db = client.db('messagesDB');
+    messagesCollection = db.collection('messages');
     console.log('Connected to MongoDB');
   })
-  .catch(err => console.error(err));
+  .catch(err => console.error('Failed to connect to MongoDB:', err.message));
 
-// Fetch all messages
-app.get('/api/messages', (req, res) => {
-  db.collection('messages').find().toArray((err, results) => {
-    if (err) throw err;
-    res.json(results);
-  });
-});
 
-// Add a new message
-app.post('/api/messages', (req, res) => {
-  const { customer_id, message } = req.body;
-  db.collection('messages').insertOne({ customer_id, message, agent_id: null, response: null, status: 'pending' }, (err, result) => {
-    if (err) throw err;
-    res.json({ id: result.insertedId });
-  });
-});
+app.post('/api/messages/respond', async (req, res) => {
+    const { customer_id, response, agent_id } = req.body; // Capture customer_id, response, and agent_id
 
-// Respond to a message
-app.post('/api/messages/respond', (req, res) => {
-  const { id, agent_id, response } = req.body;
-  db.collection('messages').updateOne({ _id: new ObjectId(id) }, { $set: { agent_id, response, status: 'responded' } }, (err, result) => {
-    if (err) throw err;
-    res.json({ message: 'Response added successfully' });
-  });
-});
+    try {
+        // First, find the message by customer_id, agent_id, and status
+        const message = await messagesCollection.findOne({
+            customer_id: customer_id,
+            status: 'pending',
+            agent_id: agent_id // Ensure we're responding to the correct message
+        });
 
-// Work: Assign the first pending message to an agent
-app.post('/api/messages/assign', (req, res) => {
-  const { agent_id } = req.body;
-  db.collection('messages').findOneAndUpdate({ agent_id: null, status: 'pending' }, { $set: { agent_id } }, { returnOriginal: false }, (err, result) => {
-    if (err) throw err;
-    if (result.value) {
-      res.json({ message: 'Message assigned', message_id: result.value._id });
-    } else {
-      res.json({ message: 'No pending messages' });
+        if (!message) {
+            console.log('No matching message found for customer_id:', customer_id, 'and agent_id:', agent_id);
+            return res.status(404).json({ message: 'Message not found or already responded' });
+        }
+
+        console.log('Responding to message:', message); // Log the message being responded to
+
+        // Then, update the message status and add the response
+        const result = await messagesCollection.updateOne(
+            { _id: message._id }, // Use the found message's _id
+            { $set: { response: response, status: 'responded' } } // Update response and status
+        );
+
+        if (result.modifiedCount > 0) {
+            console.log('Message updated successfully:', message._id);
+            res.json({ message: 'Response recorded' });
+        } else {
+            console.log('Failed to update message:', message._id);
+            res.status(500).json({ message: 'Failed to update message' });
+        }
+    } catch (err) {
+        console.error('Error responding to the message:', err);
+        res.status(500).json({ error: 'Error responding to the message' });
     }
-  });
 });
 
-// Search messages
-app.get('/api/messages/search', (req, res) => {
-  const { query } = req.query;
-  db.collection('messages').find({ message: { $regex: query, $options: 'i' } }).toArray((err, results) => {
-    if (err) throw err;
-    res.json(results);
-  });
+  
+
+
+app.get('/api/messages/next/:agent_id', async (req, res) => {
+  const agentId = req.params.agent_id;
+  console.log(`Agent ${agentId} is requesting the next message`);
+
+  try {
+      const queuedMessages = await messagesCollection.findOne(
+          { status: 'queued' },
+          { sort: { timestamp: 1 } }
+      );
+
+      if (queuedMessages) {
+          console.log(`Found queued message: ${queuedMessages._id}`);
+          // Now update the status
+          await messagesCollection.updateOne(
+              { _id: queuedMessages._id },
+              { $set: { status: 'pending', agent_id: agentId } }
+          );
+          res.json(queuedMessages);
+      } else {
+          console.log('No queued messages available');
+          res.status(404).json({ message: 'No queued messages available' });
+      }
+  } catch (err) {
+      console.error('Error fetching the next message:', err);
+      res.status(500).json({ error: 'Error fetching message' });
+  }
 });
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
 
 app.use(express.static('public'));
-

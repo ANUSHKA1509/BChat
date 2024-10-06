@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BChat: Agent Messaging</title>
+    <link rel="stylesheet" href="https://d2c5ectx2y1vm9.cloudfront.net/assets/web-3e5ad7f3b08eff3ecc7a03b7b3cda57c79dfd689cb7edd91c2081d5c8c9618cb.css" media="all" data-turbo-track="reload" />
+    <style>
+        .navbar-custom {
+            background-color: transparent;
+        }
+        .text-decoration-on-hover:hover {
+            text-decoration: underline;
+        }
+        #message-container {
+            height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div style="background-color: f0f8ff">
+    <div class='container-fluid fixed-top transparent' id='header-container'>
+        <div class='container'>
+            <nav class="navbar navbar-nav navbar-custom navbar-expand py-3">
+                <ul class="nav navbar-root navbar-root-single mr-auto" id='nav-logo'>
+                    <li class="nav-link"><a class="text-decoration-none active" href="/"><img style="height: 2.8rem;" class="transition-brightness" src="https://d2c5ectx2y1vm9.cloudfront.net/assets/logo-485b81d3b9c7d0948100d5af0c6add2a27271ae40c65cdb6e98be5907ceaee32.png" alt="Logo" /></a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-nav-single navbar-index navbar-in mr-1 mr-lg-5" id='nav-secondary'>
+                    <li>Agent ID: <span id="agent-id-display"></span></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container mt-5 pt-3">
+        <div id="message-container" class="border p-3 mb-3">
+            <div id="chat-interface">
+                <div id="message-box"></div> <!-- Added message-box here -->
+            </div>
+        </div>
+      
+        <button id="respond-btn" onclick="respondToMessage()" class="btn btn-primary mb-3">Respond</button>
+      
+        <div id="response-form-container" style="display: none;">
+            <textarea id="response-text" placeholder="Write your response..." class="form-control mb-3"></textarea>
+            <button id="send-btn" onclick="sendResponse()" class="btn btn-primary">Send</button>
+        </div>
+    </div>
+</div>
+    <script src="app.js"></script> <!-- Link to app.js -->
+</body>
+</html>

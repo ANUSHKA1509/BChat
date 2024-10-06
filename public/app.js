@@ -1,40 +1,58 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:3000/api';
+let agentId = null;
+let currentMessageId = null;
+let currentMessageCustomerId = null;
 
+// Function to get query parameters from the URL
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
 
-// Fetch all messages and display them
-function loadMessages() {
-    fetch(`${API_URL}/messages`)
+// On page load, check if we are in the chat interface
+window.onload = function() {
+    // Get agentId from the URL
+    agentId = getQueryParam('agentId');
+    if (agentId) {
+        document.getElementById('agent-id-display').innerText = agentId; // Display agent ID if available
+        loadNextMessage(); // Fetch the first message if in chat interface
+    } else {
+        alert('Agent ID is missing.');
+    }
+};
+
+// Fetch the next available message for this agent
+function loadNextMessage() {
+    fetch(`${API_URL}/messages/next/${agentId}`)
         .then(response => response.json())
         .then(data => {
-            const messageList = document.getElementById('message-list');
-            messageList.innerHTML = '';
-            data.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                
-                const date = new Date(message.timestamp); // Convert timestamp to Date object
-                
-                messageDiv.innerHTML = `
-                    <p><strong>Customer ${message.customer_id}:</strong> ${message.message}</p>
-                    <p><em>Received at: ${date.toLocaleString()}</em></p>
-                    ${message.response ? `<p><strong>Response:</strong> ${message.response}</p>` : ''}
-                    ${!message.response ? `<button onclick="openResponseForm('${message._id}')">Respond</button>` : ''}
-                `;
-                messageList.appendChild(messageDiv);
-            });
+            if (data._id) {
+                currentMessageId = data._id;
+                currentMessageCustomerId = data.customer_id; // Store customer ID
+                const messageBox = document.getElementById('message-box');
+                messageBox.innerHTML = `<p><strong>Customer ${data.customer_id}:</strong> ${data.message}</p>
+                                        <p><em>Received at: ${new Date(data.timestamp).toLocaleString()}</em></p>`;
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching message:', err);
+            alert('No queued messages available.');
         });
 }
 
-
-// Respond to a message
-function openResponseForm(messageId) {
-    document.getElementById('message-id').value = messageId;
+// Respond to the current message
+function respondToMessage() {
+    document.getElementById('response-form-container').style.display = 'block';
+    document.getElementById('respond-btn').style.display = 'none';
 }
 
-document.getElementById('response-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const messageId = document.getElementById('message-id').value;
+// Send response to the current message
+function sendResponse() {
     const responseText = document.getElementById('response-text').value;
+    if (!responseText) {
+        alert('Please enter a response.');
+        return;
+    }
 
     fetch(`${API_URL}/messages/respond`, {
         method: 'POST',
@@ -42,55 +60,17 @@ document.getElementById('response-form').addEventListener('submit', (e) => {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            id: messageId,
-            agent_id: 'agent123',  // Hardcoded agent ID
-            response: responseText
-        })
-    }).then(() => {
-        loadMessages();
-    });
-});
-
-// Search messages
-function searchMessages() {
-    const query = document.getElementById('search-bar').value;
-    fetch(`${API_URL}/messages/search?query=${query}`)
+            customer_id: currentMessageCustomerId, // Use the variable that holds the customer ID
+            response: responseText,
+            agent_id: agentId,
+        }),
+    })
         .then(response => response.json())
-        .then(data => {
-            const messageList = document.getElementById('message-list');
-            messageList.innerHTML = '';
-            data.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                messageDiv.innerHTML = `
-                    <p><strong>Customer ${message.customer_id}:</strong> ${message.message}</p>
-                    ${message.response ? `<p><strong>Response:</strong> ${message.response}</p>` : ''}
-                    ${!message.response ? `<button onclick="openResponseForm('${message._id}')">Respond</button>` : ''}
-                `;
-                messageList.appendChild(messageDiv);
-            });
-        });
-}
-
-// Add a new message
-app.post('/api/messages', (req, res) => {
-    const { customer_id, message, timestamp } = req.body;
-    db.collection('messages').insertOne(
-      { 
-        customer_id, 
-        message, 
-        timestamp: new Date(timestamp), // Store timestamp as a date object
-        agent_id: null, 
-        response: null, 
-        status: 'pending' 
-      }, 
-      (err, result) => {
-        if (err) throw err;
-        res.json({ id: result.insertedId });
-      }
-    );
-  });
-  
-
-// Initially load all messages
-loadMessages();
+        .then(() => {
+            document.getElementById('response-text').value = ''; // Clear text box
+            document.getElementById('response-form-container').style.display = 'none';
+            document.getElementById('respond-btn').style.display = 'block';
+            loadNextMessage(); // Load the next queued message
+        })
+        .catch(err => console.error('Error sending response:', err));
+};

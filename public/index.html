@@ -3,21 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BChat: Customer Service Portal for Branch</title>
-    <link rel="stylesheet" href="style.css">
+    <title>BChat: Agent Messaging</title>
+    <link rel="stylesheet" href="https://d2c5ectx2y1vm9.cloudfront.net/assets/web-3e5ad7f3b08eff3ecc7a03b7b3cda57c79dfd689cb7edd91c2081d5c8c9618cb.css" media="all" data-turbo-track="reload" />
+    <style>
+        .navbar-custom {
+            background-color: transparent;
+        }
+        .text-decoration-on-hover:hover {
+            text-decoration: underline;
+        }
+        .index-local-hero {
+            background-size: cover;
+            background-position: center;
+            min-height: 500px;
+        }
+        .text-large {
+            font-size: 1.25rem;
+        }
+        #agent-id-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #agent-id-modal > div {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <h1>BChat: Customer Service Portal for Branch</h1>
-        <input type="text" id="search-bar" placeholder="Search messages..." oninput="searchMessages()">
-        <div id="message-list"></div>
-        <form id="response-form">
-            <input type="hidden" id="message-id" />
-            <textarea id="response-text" placeholder="Enter your response"></textarea>
-            <button type="submit">Respond</button>
-        </form>
+    <div class='container-fluid fixed-top transparent' id='header-container'>
+        <div class='container'>
+            <nav class="navbar navbar-nav navbar-custom navbar-expand py-3">
+                <ul class="nav navbar-root navbar-root-single mr-auto" id='nav-logo'>
+                    <li class="nav-link"><a class="text-decoration-none active" href="/"><img style="height: 2.8rem;" class="transition-brightness" src="https://d2c5ectx2y1vm9.cloudfront.net/assets/logo-485b81d3b9c7d0948100d5af0c6add2a27271ae40c65cdb6e98be5907ceaee32.png" alt="Logo" /></a></li>
+                </ul>
+            </nav>
+        </div>
     </div>
 
-    <script src="app.js"></script>
+    <div class='container-fluid pt-5 bg-light index-local-hero position-relative' style="background-image: url('https://d2c5ectx2y1vm9.cloudfront.net/assets/index_local/index_local_hero.en_IN-5f305f0dd4cd806ca235e8acc50ab73435cc235996513300052facf485b1437f.png');">
+        <div class='container'>
+            <div class='row'>
+                <div class='col-md-7 mt-5 mt-md-20 text-center text-md-left'>
+                    <h1 class='pt-6'><span class='d-inline-block'>BChat:</span> <span class='d-inline-block'> Agent Messaging</span></h1>
+                    <p class='text-large'>Access your agent messaging portal anytime, anywhere.</p>
+                    <div class='mt-4'>
+                        <form id="agent-id-form" onsubmit="return submitAgentId(event)">
+                            <div class="input-group mb-3">
+                                <input type="text" id="agent-id-input" class="form-control" placeholder="Enter your Agent ID" required>
+                                <button type="submit" class="btn btn-primary">Start Messaging</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function submitAgentId(event) {
+            event.preventDefault();
+            var agentId = document.getElementById('agent-id-input').value;
+            if (agentId) {
+                // Redirect to the chat page with the agent ID as a query parameter
+                window.location.href = 'chat.html?agentId=' + encodeURIComponent(agentId);
+            }
+            return false;
+        }
+    </script>
 </body>
 </html>
