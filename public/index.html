@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BChat: Customer Service Portal for Branch</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <h1>BChat: Customer Service Portal for Branch</h1>
+        <input type="text" id="search-bar" placeholder="Search messages..." oninput="searchMessages()">
+        <div id="message-list"></div>
+        <form id="response-form">
+            <input type="hidden" id="message-id" />
+            <textarea id="response-text" placeholder="Enter your response"></textarea>
+            <button type="submit">Respond</button>
+        </form>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
